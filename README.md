@@ -2,8 +2,11 @@
 Collection of different nagios plugins
 
 ## Check Elasticsearch
-- Check the status of an Elasticsearch cluster
-- Check the cpu / java heap memory percentage of a particular node on the cluster
+I've created this check since I didn't find a check which was compatible with Elasticsearch 5.1 with authentication in HTTPS. This check was tested against [Elastic Cloud](https://cloud.elastic.co/) by Elastic.co.
+
+Features:
+- Check the status of an Elasticsearch cluster (Green/Yellow/Red) with metrics.
+- Check the cpu / java heap memory / filesystem usage percentage of a particular node on the cluster when providing the *--node* switch.
 
 ```
 usage: check_elasticsearch.py [-h] -H ELASTICSEARCH_HOST
