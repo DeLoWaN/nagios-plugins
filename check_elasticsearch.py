@@ -13,8 +13,10 @@ parser.add_argument('-s', '--ssl', action='store_true', help='Use this when conn
 parser.add_argument('-n', '--node', help='Check health of a particular node')
 parser.add_argument('-cw', '--cpu-warning', type=int, default=90, help='Minimum value of CPU percentage to return a warning state. Defaults to 90.')
 parser.add_argument('-hw', '--heap-warning', type=int, default=90, help='Minimum value of Java Heap size to return a warning state. Defaults to 90.')
+parser.add_argument('-fw', '--fs-warning', type=int, default=90, help='Minimum value of file system size to return a warning state. Defaults to 90.')
 parser.add_argument('-cc', '--cpu-critical', type=int, default=95, help='Minimum value of CPU percentage to return a critical state. Defaults to 95.')
 parser.add_argument('-hc', '--heap-critical', type=int, default=95, help='Minimum value of Java Heap size to return a critical state. Defaults to 95.')
+parser.add_argument('-fc', '--fs-critical', type=int, default=95, help='Minimum value of file system size to return a critical state. Defaults to 95.')
 parser.add_argument('-u', '--user')
 parser.add_argument('-p', '--password')
 parser.add_argument('-v', '--verbose', action='count')
@@ -59,12 +61,16 @@ try:
     else:
         cpu_usage = res['nodes'][args.node]['os']['cpu']['percent']
         jvm_heap_usage = res['nodes'][args.node]['jvm']['mem']['heap_used_percent']
+        fs_usage = round(100 - 100 * res['nodes'][args.node]['fs']['total']['available_in_bytes'] / res['nodes'][args.node]['fs']['total']['total_in_bytes'])
         status=0
         if cpu_usage > args.cpu_critical:
             print('CPU is critical.', end='')
             status=2
         if jvm_heap_usage > args.heap_critical:
             print('Java Heap is critical.', end='')
+            status=2
+        if fs_usage > args.fs_critical:
+            print('FS is critical.', end='')
             status=2
         if not status == 2:
             if cpu_usage > args.cpu_warning:
@@ -73,11 +79,14 @@ try:
             if jvm_heap_usage > args.heap_warning:
                 print('Java Heap is warning.', end='')
                 status=1
+            if fs_usage > args.fs_warning:
+                print('FS is warning.', end='')
+                status=1
         if status == 0:
-            print('CPU and Java Heap are ok.')
+            print('CPU, Java Heap and FS are ok.')
         else:
             print()
-        print('|cpu_usage={} jvm_heap_usage={}'.format(cpu_usage, jvm_heap_usage))
+        print('|cpu_usage={} jvm_heap_usage={} fs_usage={}'.format(cpu_usage, jvm_heap_usage, fs_usage))
         exit(status)
     exit(0)
 
