@@ -48,3 +48,75 @@ optional arguments:
   -p PASSWORD, --password PASSWORD
   -v, --verbose
 ```
+
+## Check Elasticsearch last entry
+
+Checks the last entry on an index (wildcard may be used). Basically it make a ES query on your index with
+
+```json
+{
+  "query": {
+    "match_all": {}
+  },
+  "size": 1,
+  "sort": [
+    {
+      "@timestamp": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+```
+
+You can customize the search with the *--query* parameter. It will replace the *match_all* term. For example, with `-q '{"term":{"host":"example.com"}}'`, it will use this query :
+
+```json
+{
+  "query": {
+    "term": {
+      "host": "example.com"
+    }
+  },
+  "size": 1,
+  "sort": [
+    {
+      "@timestamp": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+```
+
+```
+usage: check_elasticsearch_last_entry.py [-h] -H ELASTICSEARCH_HOST
+                                         [-P ELASTICSEARCH_PORT] [-s]
+                                         [-i INDEX] [-q QUERY] [-w WARNING]
+                                         [-c CRITICAL] [-u USER] [-p PASSWORD]
+                                         [-v]
+
+Check the last entry of an index. Can be wildcarded. Returns ok if last entry
+is fresh (customisable)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -H ELASTICSEARCH_HOST, --host ELASTICSEARCH_HOST
+                        The Elasticsearch host
+  -P ELASTICSEARCH_PORT, --port ELASTICSEARCH_PORT
+                        The Elasticsearch port
+  -s, --ssl             Use this when connecting via SSL
+  -i INDEX, --index INDEX
+                        The index to check. Can be wildcarded
+  -q QUERY, --query QUERY
+                        Customise the query. Must be an ES json query string
+  -w WARNING, --warning WARNING
+                        Minimum difference in seconds from now to consider a
+                        warning data missing. Defaults to 600.
+  -c CRITICAL, --critical CRITICAL
+                        Minimum difference in seconds from now to consider a
+                        critical data missing. Defaults to 3600.
+  -u USER, --user USER
+  -p PASSWORD, --password PASSWORD
+  -v, --verbose
+```

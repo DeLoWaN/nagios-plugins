@@ -18,7 +18,7 @@ parser.add_argument('-H', '--host', required=True, help='The Elasticsearch host'
 parser.add_argument('-P', '--port', help='The Elasticsearch port', metavar='ELASTICSEARCH_PORT', default='9200')
 parser.add_argument('-s', '--ssl', action='store_true', help='Use this when connecting via SSL')
 parser.add_argument('-i', '--index', help='The index to check. Can be wildcarded', default='_all')
-parser.add_argument('-q', '--query', help='Customise the query. Must be an ES json query string', default='')
+parser.add_argument('-q', '--query', help='Customise the query. Must be an ES json query string', default='{"match_all": {}}')
 parser.add_argument('-w', '--warning', type=int, default=600, help='Minimum difference in seconds from now to consider a warning data missing. Defaults to 600.')
 parser.add_argument('-c', '--critical', type=int, default=3600, help='Minimum difference in seconds from now to consider a critical data missing. Defaults to 3600.')
 parser.add_argument('-u', '--user')
@@ -30,17 +30,18 @@ args = parser.parse_args()
 try:
     url = 'http{}://{}:{}/{}/_search'.format('s' if args.ssl else '', args.host, args.port if args.port is not None else '', args.index)
 
+    query = '{"query":%s,"size":1,"sort":[{"@timestamp":{"order":"desc"}}]}' % (args.query)
     if args.user is None:
         response = requests.get(
             url,
-            data=args.query)
+            data=query)
     else:
         response = requests.get(
         url,
         auth=requests.auth.HTTPBasicAuth(
             args.user,
             args.password),
-        data=args.query)
+        data=query)
 
     if response.status_code == 401:
         raise AuthError('Authentication Error')
