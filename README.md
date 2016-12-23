@@ -51,7 +51,13 @@ optional arguments:
 
 ## Check Elasticsearch last entry
 
-Checks the last entry on an index (wildcard may be used). Basically it make a ES query on your index with
+Needs the python-dateutil lib.
+
+```bash
+pip3 install python-dateutil
+```
+
+Checks the last entry on an index (wildcard may be used). Basically it make a ES query on your index with:
 
 ```json
 {

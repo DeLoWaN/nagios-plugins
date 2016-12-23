@@ -4,7 +4,7 @@ import argparse
 import traceback
 import dateutil.parser
 from datetime import datetime
-from pprint import pprint
+from dateutil.tz import tzlocal
 
 class AuthError(Exception):
     pass
@@ -53,8 +53,8 @@ try:
     if res['hits']['total'] == 0:
         raise NoResultsError('No Results Error')
     
-    lastdata = dateutil.parser.parse(res['hits']['hits'][0]['_source']['@timestamp'], ignoretz=True)
-    diff = datetime.now() - lastdata
+    lastdata = dateutil.parser.parse(res['hits']['hits'][0]['_source']['@timestamp'])
+    diff = datetime.now(tzlocal()) - lastdata
     print('Last fetch data was {}.'.format(diff))
     print('|difference_in_seconds={}.'.format(diff.seconds))
     if diff.seconds > args.critical:
