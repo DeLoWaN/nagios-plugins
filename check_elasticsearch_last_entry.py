@@ -56,10 +56,10 @@ try:
     lastdata = dateutil.parser.parse(res['hits']['hits'][0]['_source']['@timestamp'])
     diff = datetime.now(tzlocal()) - lastdata
     print('Last fetch data was {}.'.format(diff))
-    print('|difference_in_seconds={}.'.format(diff.seconds))
-    if diff.seconds > args.critical:
+    print('|difference_in_seconds={}.'.format(round(diff.total_seconds())))
+    if diff.total_seconds() > args.critical:
         exit(2)
-    elif diff.seconds > args.warning:
+    elif diff.total_seconds() > args.warning:
         exit(1)
     else:
         exit(0)
