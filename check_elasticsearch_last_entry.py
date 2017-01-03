@@ -13,6 +13,20 @@ class NoResultsError(Exception):
 class ESError(Exception):
     pass
 
+def pretty_time_delta(seconds):
+    seconds = int(seconds)
+    days, seconds = divmod(seconds, 86400)
+    hours, seconds = divmod(seconds, 3600)
+    minutes, seconds = divmod(seconds, 60)
+    if days > 0:
+        return '%dd, %dh%dm%ds' % (days, hours, minutes, seconds)
+    elif hours > 0:
+        return '%dh %dm%ds' % (hours, minutes, seconds)
+    elif minutes > 0:
+        return '%dm%ds' % (minutes, seconds)
+    else:
+        return '%ds' % (seconds,)
+
 parser = argparse.ArgumentParser(description='Check the last entry of an index. Can be wildcarded. Returns ok if last entry is fresh (customisable)')
 parser.add_argument('-H', '--host', required=True, help='The Elasticsearch host', metavar='ELASTICSEARCH_HOST')
 parser.add_argument('-P', '--port', help='The Elasticsearch port', metavar='ELASTICSEARCH_PORT', default='9200')
@@ -55,7 +69,8 @@ try:
     
     lastdata = dateutil.parser.parse(res['hits']['hits'][0]['_source']['@timestamp'])
     diff = datetime.now(tzlocal()) - lastdata
-    print('Last fetch data was {}.'.format(diff))
+    index = res['hits']['hits'][0]['_index']
+    print('Index {} last fetch data was at {} ({} ago)'.format(index, lastdata.strftime("%Y-%m-%d %H:%M:%S"), pretty_time_delta(diff.total_seconds())))
     print('|difference_in_seconds={}.'.format(round(diff.total_seconds())))
     if diff.total_seconds() > args.critical:
         exit(2)
