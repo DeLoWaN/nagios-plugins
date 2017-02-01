@@ -27,29 +27,29 @@ args = parser.parse_args()
 eshost = 'http' + ('s' if args.ssl else '') + '://'+ args.host + (':' + args.port if args.port is not None else '')
 
 try:
-    # Get the node id from the name. Used because node id can change overtime.
-    urlNodeId = eshost + '/_cat/nodes?v&h=n,id&full_id'
-    if args.user is None:
-        response = requests.get(
-            urlNodeId)
-    else:
-        response = requests.get(
-        urlNodeId,
-        auth=requests.auth.HTTPBasicAuth(
-            args.user,
-            args.password))
-
-    if response.status_code == 401:
-        raise AuthError('Authentication Error')
-    
-    # Get id from name, removing last char from original string (otherwise split will bug)
-    nodes = dict(re.compile("\s+").split(s) for s in response.text[:-1].split('\n'))
-    args.node_name = nodes[args.node_name]
-
     if args.node_name is None:
         url = eshost + '/_cluster/health'
     else:
         url = eshost + '/_nodes/stats'
+
+        # Get the node id from the name. Used because node id can change overtime.
+        urlNodeId = eshost + '/_cat/nodes?v&h=n,id&full_id'
+        if args.user is None:
+            response = requests.get(
+                urlNodeId)
+        else:
+            response = requests.get(
+            urlNodeId,
+            auth=requests.auth.HTTPBasicAuth(
+                args.user,
+                args.password))
+
+        if response.status_code == 401:
+            raise AuthError('Authentication Error')
+        
+        # Get id from name, removing last char from original string (otherwise split will bug)
+        nodes = dict(re.compile("\s+").split(s) for s in response.text[:-1].split('\n'))
+        args.node_name = nodes[args.node_name]
 
     if args.user is None:
         response = requests.get(
