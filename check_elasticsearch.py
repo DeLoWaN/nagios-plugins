@@ -2,6 +2,7 @@ import requests
 import json
 import argparse
 import traceback
+import re
 
 class AuthError(Exception):
     pass
@@ -10,7 +11,7 @@ parser = argparse.ArgumentParser(description='Check health of an Elasticsearch h
 parser.add_argument('-H', '--host', required=True, help='The Elasticsearch host', metavar='ELASTICSEARCH_HOST')
 parser.add_argument('-P', '--port', help='The Elasticsearch port', metavar='ELASTICSEARCH_PORT', default='9200')
 parser.add_argument('-s', '--ssl', action='store_true', help='Use this when connecting via SSL')
-parser.add_argument('-n', '--node', help='Check health of a particular node')
+parser.add_argument('-n', '--node-name', help='Check health of a particular node')
 parser.add_argument('-cw', '--cpu-warning', type=int, default=90, help='Minimum value of CPU percentage to return a warning state. Defaults to 90.')
 parser.add_argument('-hw', '--heap-warning', type=int, default=90, help='Minimum value of Java Heap size to return a warning state. Defaults to 90.')
 parser.add_argument('-fw', '--fs-warning', type=int, default=90, help='Minimum value of file system size to return a warning state. Defaults to 90.')
@@ -26,7 +27,26 @@ args = parser.parse_args()
 eshost = 'http' + ('s' if args.ssl else '') + '://'+ args.host + (':' + args.port if args.port is not None else '')
 
 try:
-    if args.node is None:
+    # Get the node id from the name. Used because node id can change overtime.
+    urlNodeId = eshost + '/_cat/nodes?v&h=n,id&full_id'
+    if args.user is None:
+        response = requests.get(
+            urlNodeId)
+    else:
+        response = requests.get(
+        urlNodeId,
+        auth=requests.auth.HTTPBasicAuth(
+            args.user,
+            args.password))
+
+    if response.status_code == 401:
+        raise AuthError('Authentication Error')
+    
+    # Get id from name, removing last char from original string (otherwise split will bug)
+    nodes = dict(re.compile("\s+").split(s) for s in response.text[:-1].split('\n'))
+    args.node_name = nodes[args.node_name]
+
+    if args.node_name is None:
         url = eshost + '/_cluster/health'
     else:
         url = eshost + '/_nodes/stats'
@@ -45,7 +65,7 @@ try:
         raise AuthError('Authentication Error')
     res = json.loads(response.text)
     
-    if args.node is None:
+    if args.node_name is None:
         active_primary_shards = res['active_primary_shards']
         active_shards = res['active_shards']
         unassigned_shards = res['unassigned_shards']
@@ -59,9 +79,9 @@ try:
         elif status == 'green':
             exit(0)
     else:
-        cpu_usage = res['nodes'][args.node]['os']['cpu']['percent']
-        jvm_heap_usage = res['nodes'][args.node]['jvm']['mem']['heap_used_percent']
-        fs_usage = round(100 - 100 * res['nodes'][args.node]['fs']['total']['available_in_bytes'] / res['nodes'][args.node]['fs']['total']['total_in_bytes'])
+        cpu_usage = res['nodes'][args.node_name]['os']['cpu']['percent']
+        jvm_heap_usage = res['nodes'][args.node_name]['jvm']['mem']['heap_used_percent']
+        fs_usage = round(100 - 100 * res['nodes'][args.node_name]['fs']['total']['available_in_bytes'] / res['nodes'][args.node_name]['fs']['total']['total_in_bytes'])
         status=0
         if cpu_usage > args.cpu_critical:
             print('CPU is critical.', end='')
