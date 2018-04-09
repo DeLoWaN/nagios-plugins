@@ -48,14 +48,16 @@ try:
     if args.user is None:
         response = requests.get(
             url,
-            data=query)
+            data=query,
+            headers={'content-type': 'application/json'})
     else:
         response = requests.get(
         url,
         auth=requests.auth.HTTPBasicAuth(
             args.user,
             args.password),
-        data=query)
+        data=query,
+        headers={'content-type': 'application/json'})
 
     if response.status_code == 401:
         raise AuthError('Authentication Error')
